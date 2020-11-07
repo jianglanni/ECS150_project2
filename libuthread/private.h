@@ -110,6 +110,7 @@ struct uthread_tcb;
  */
 struct uthread_tcb *uthread_current(void);
 
+static uthread_tcb current_thread;
 /*
  * uthread_block - Block currently running thread
  */
