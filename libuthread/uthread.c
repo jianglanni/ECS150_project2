@@ -34,25 +34,25 @@ void uthread_exit(void)
 
 int uthread_create(uthread_func_t func, void *arg)
 {
-    uthread_tcb newThread = (uthread_tcb) malloc(sizeof(uthread_tcb));
+    struct *uthread_tcb newThread = (uthread_tcb*) malloc(sizeof(uthread_tcb));
     if(newThread == NULL){
         return -1;
     }
-    newThread.sp = uthread_ctx_alloc_stack();
-    uthread_ctx_init(newThread.context, newThread.sp, func, arg);
-    newThread.state = 0;
+    newThread->sp = uthread_ctx_alloc_stack();
+    uthread_ctx_init(newThread->context, newThread->sp, func, arg);
+    newThread->state = 0;
     return 0;
 }
 
 int uthread_start(uthread_func_t func, void *arg)
 {
-    uthread_tcb newThread = (uthread_tcb) malloc(sizeof(uthread_tcb));
+    struct *uthread_tcb newThread = (uthread_tcb*) malloc(sizeof(uthread_tcb));
     if(newThread == NULL){
         return -1;
     }
-    newThread.sp = uthread_ctx_alloc_stack();
-    uthread_ctx_init(newThread.context, newThread.sp, func, arg);
-    newThread.state = 0;
+    newThread->sp = uthread_ctx_alloc_stack();
+    uthread_ctx_init(newThread->context, newThread->sp, func, arg);
+    newThread->state = 0;
 
     return 0;
 }
