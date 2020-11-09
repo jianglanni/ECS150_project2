@@ -17,7 +17,6 @@ queue_t tcb_queue = NULL; //where we keep the TCBs
 int thread_is_exit = 0; //Modified to 1 when some thread calls exit()
 
 struct uthread_tcb {
-	/* TODO Phase 2 */
 	int state; //0 for ready, 1 for running, 2 for blocked.
 	uthread_ctx_t* ctx;
 	void *top_of_stack;
@@ -27,22 +26,20 @@ struct uthread_tcb* current_running;
 
 struct uthread_tcb *uthread_current(void)
 {
-	/* TODO Phase 2 */
 	return current_running;
 }
 
 void uthread_yield(void)
 {
-	/* TODO Phase 2 */
-	queue_enqueue(tcb_queue, (void*) uthread_current());
-	uthread_ctx_switch(current_running -> ctx, main_ctx); //Go back to main thread.
+	current_running -> state = 0;
+	queue_enqueue(tcb_queue, (void*) uthread_current()); //Put itself in line.
+	uthread_ctx_switch(current_running -> ctx, &main_ctx); //Go back to main thread.
 }
 
 void uthread_exit(void)
 {
-	/* TODO Phase 2 */
 	thread_is_exit = 1; //Let main thread know that there is an exit.
-	uthread_ctx_switch(current_running -> ctx, main_ctx);
+	uthread_ctx_switch(current_running -> ctx, &main_ctx);
 }
 
 int uthread_create(uthread_func_t func, void *arg)
@@ -53,7 +50,7 @@ int uthread_create(uthread_func_t func, void *arg)
 	if (created_thread == NULL)
 		return -1;
 
-	uthread_ctx_alloc_stack(created_thread -> top_of_stack); //Handle the stack.
+	created_thread -> top_of_stack = uthread_ctx_alloc_stack(); //Handle the stack.
 
 	created_thread -> ctx = malloc(sizeof(uthread_ctx_t));
 	uthread_ctx_init(created_thread -> ctx, created_thread -> top_of_stack, func, arg);
@@ -63,20 +60,23 @@ int uthread_create(uthread_func_t func, void *arg)
 
 int uthread_start(uthread_func_t func, void *arg)
 {
-	/* TODO Phase 2 */
 	tcb_queue = queue_create();
 	uthread_create(func, arg);
+
 	while (queue_length(tcb_queue)) {
-		queue_dequeue(tcb_queue, &current_running);
+		queue_dequeue(tcb_queue, (void**) &current_running);
 		current_running -> state = 1;
-		uthread_ctx_switch(main_ctx, current_running -> ctx); //Jump to the scheduled func
-		// ** The boi is running... and done! ** //
+		uthread_ctx_switch(&main_ctx, current_running -> ctx); //Jump to the scheduled func
+
+		// ** A thread is running... and done! ** //
+
 		if (thread_is_exit) { //Exit is called
 			uthread_ctx_destroy_stack(current_running -> top_of_stack);
 			free(current_running);
-			thread_is_exit = 0; //reset the signal.
+			thread_is_exit = 0; //reset the exit note.
 		}
 	}
+
 	queue_destroy(tcb_queue);
 	tcb_queue = NULL; //Reset
 }
