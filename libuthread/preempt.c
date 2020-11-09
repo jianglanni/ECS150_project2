@@ -15,19 +15,33 @@
  */
 #define HZ 100
 
-void preempt_disable(void)
+static sigset_t *set;
+static void handler(int sig){
+    printf("Hello %d\n", sig);
+    void preempt_disable(void)
 {
-	/* TODO Phase 4 */
+    sigemptyset(set);
+    sigaddset(set, SIGVTALRM);
+    sigprocmask(SIG_BLOCK, set, NULL);
 }
 
 void preempt_enable(void)
 {
-	/* TODO Phase 4 */
+	sigemptyset(set);
+	sigaddset(set, SIGVTALRM);
+	sigprocmask(SIG_UNBLOCK, set, NULL);
 }
 
 void preempt_start(void)
 {
-	/* TODO Phase 4 */
+    struct sigaction new, old;
+    struct itimerval old_it, new_it;
+
+    sa.sa_handler = handler;
+    sigaction(SIGVTALRM, &new, &old)
+    unsigned int alarm(unsigned int secs){
+
+    }
 }
 
 void preempt_stop(void)
