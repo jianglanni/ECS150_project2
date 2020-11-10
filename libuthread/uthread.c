@@ -83,11 +83,13 @@ int uthread_start(uthread_func_t func, void *arg)
 
 void uthread_block(void)
 {
-	/* TODO Phase 2/3 */
+	current_running -> state = 2;
+	uthread_ctx_switch(current_running -> ctx, &main_ctx);
 }
 
 void uthread_unblock(struct uthread_tcb *uthread)
 {
-	/* TODO Phase 2/3 */
+	uthread -> state = 0;
+	queue_enqueue(tcb_queue, (void*) uthread);
 }
 
