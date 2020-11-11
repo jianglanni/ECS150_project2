@@ -31,6 +31,8 @@ struct uthread_tcb *uthread_current(void)
 
 void uthread_yield(void)
 {
+	preempt_disable();
+
 	current_running -> state = 0;
 	struct uthread_tcb* yielded_thread = current_running;
 
@@ -41,6 +43,7 @@ void uthread_yield(void)
 	queue_dequeue(tcb_queue, (void**) &current_running); 
 
 	current_running -> state = 1;
+	preempt_enable();
 
 	//Go to the next thread.
 	uthread_ctx_switch(yielded_thread -> ctx, current_running -> ctx); 
@@ -48,6 +51,8 @@ void uthread_yield(void)
 
 void uthread_exit(void)
 {
+	preempt_disable();
+
 	current_running -> state = 0;
 	struct uthread_tcb* exited_thread = current_running;
 
@@ -58,6 +63,7 @@ void uthread_exit(void)
 	queue_dequeue(tcb_queue, (void**) &current_running); 
 
 	current_running -> state = 1;
+	preempt_enable();
 
 	//Go to the next thread.
 	uthread_ctx_switch(exited_thread -> ctx, current_running -> ctx); 
@@ -104,6 +110,7 @@ int uthread_start(uthread_func_t func, void *arg)
 	current_running = main_thread;
 
 	uthread_create(func, arg);
+	preempt_start();
 
 	while (1) {
 		//Deal with completed threads
@@ -121,6 +128,7 @@ int uthread_start(uthread_func_t func, void *arg)
 		uthread_yield();
 	}
 
+	preempt_stop();
 	queue_destroy(tcb_queue);
 	queue_destroy(garbage_tcb);
 
@@ -131,6 +139,8 @@ int uthread_start(uthread_func_t func, void *arg)
 
 void uthread_block(void)
 {
+	preempt_disable();
+
 	current_running -> state = 2;
 	struct uthread_tcb* blocked_thread = current_running;
 
@@ -138,6 +148,7 @@ void uthread_block(void)
 	queue_dequeue(tcb_queue, (void**) &current_running); 
 
 	current_running -> state = 1;
+	preempt_enable();
 
 	//Go to the next thread.
 	uthread_ctx_switch(blocked_thread -> ctx, current_running -> ctx);

@@ -15,36 +15,46 @@
  */
 #define HZ 100
 
-static sigset_t *set;
-static void handler(int sig){
-    printf("Hello %d\n", sig);
-    void preempt_disable(void)
+void preempt_disable(void)
 {
-    sigemptyset(set);
-    sigaddset(set, SIGVTALRM);
-    sigprocmask(SIG_BLOCK, set, NULL);
+	sigset_t ss;
+	sigemptyset(&ss);
+	sigaddset(&ss, SIGVTALRM);
+	sigprocmask(SIG_BLOCK, &ss, NULL);
 }
 
 void preempt_enable(void)
 {
-	sigemptyset(set);
-	sigaddset(set, SIGVTALRM);
-	sigprocmask(SIG_UNBLOCK, set, NULL);
+	sigset_t ss;
+	sigemptyset(&ss);
+	sigaddset(&ss, SIGVTALRM);
+	sigprocmask(SIG_UNBLOCK, &ss, NULL);
+}
+
+void sig_handler(int signum) {
+	uthread_yield();
 }
 
 void preempt_start(void)
 {
-    struct sigaction new, old;
-    struct itimerval old_it, new_it;
-
-    sa.sa_handler = handler;
-    sigaction(SIGVTALRM, &new, &old)
-    unsigned int alarm(unsigned int secs){
-
-    }
+	struct sigaction sa;
+	sa.sa_handler = sig_handler;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = 0;
+	sigaction(SIGVTALRM, &sa, NULL);
+	
+	//Set the alarm
+	struct itimerval itv;
+    	itv.it_interval.tv_sec = 0; //10ms
+    	itv.it_interval.tv_usec = 1000000 / HZ;
+    	itv.it_value.tv_sec = 0; //0.001ms, if both 0, it doesn't run
+    	itv.it_value.tv_usec = 1;
+    	setitimer(ITIMER_VIRTUAL, &itv, NULL);
 }
 
 void preempt_stop(void)
 {
-	/* TODO Phase 4 */
+	//Stop the alarm
+	setitimer(ITIMER_VIRTUAL, NULL, NULL);
 }
+
