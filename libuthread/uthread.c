@@ -70,6 +70,7 @@ int uthread_create(uthread_func_t func, void *arg)
 	//Allocate memory space for TCB.
 	created_thread = (struct uthread_tcb*) 
 				malloc(sizeof(struct uthread_tcb)); 
+
 	if (created_thread == NULL)
 		return -1;
 
@@ -105,7 +106,6 @@ int uthread_start(uthread_func_t func, void *arg)
 	uthread_create(func, arg);
 
 	while (1) {
-
 		//Deal with completed threads
 		while (queue_length(garbage_tcb) > 0) {
 			void* discard;
