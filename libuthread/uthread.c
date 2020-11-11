@@ -97,8 +97,9 @@ int uthread_start(uthread_func_t func, void *arg)
 
 	queue_destroy(tcb_queue);
 	queue_destroy(garbage_tcb);
-	tcb_queue = NULL; //Reset
-	garbage_tcb = NULL;
+
+	free(main_thread);
+
 	return 0;
 }
 
