@@ -33,45 +33,67 @@ void uthread_yield(void)
 {
 	current_running -> state = 0;
 	struct uthread_tcb* yielded_thread = current_running;
-	queue_enqueue(tcb_queue, (void*) uthread_current()); //Put itself in line.
-	queue_dequeue(tcb_queue, (void**) &current_running); //Set the next thread as the running thread.
+
+	//Put itself in line.
+	queue_enqueue(tcb_queue, (void*) uthread_current()); 
+
+	//Set the next thread as the running thread.
+	queue_dequeue(tcb_queue, (void**) &current_running); 
+
 	current_running -> state = 1;
-	uthread_ctx_switch(yielded_thread -> ctx, current_running -> ctx); //Go to the next thread.
+
+	//Go to the next thread.
+	uthread_ctx_switch(yielded_thread -> ctx, current_running -> ctx); 
 }
 
 void uthread_exit(void)
 {
 	current_running -> state = 0;
-	queue_enqueue(garbage_tcb, (void*) uthread_current()); //Get into the garbage bin. 
 	struct uthread_tcb* exited_thread = current_running;
-	queue_dequeue(tcb_queue, (void**) &current_running); //Set the next thread as the running thread.
+
+	//Move into the garbage bin. 
+	queue_enqueue(garbage_tcb, (void*) uthread_current()); 
+
+	//Set the next thread as the running thread.
+	queue_dequeue(tcb_queue, (void**) &current_running); 
+
 	current_running -> state = 1;
-	uthread_ctx_switch(exited_thread -> ctx, current_running -> ctx); //Go to the next thread.
+
+	//Go to the next thread.
+	uthread_ctx_switch(exited_thread -> ctx, current_running -> ctx); 
 }
 
 int uthread_create(uthread_func_t func, void *arg)
 {
 	struct uthread_tcb *created_thread = NULL;
 
-	created_thread = (struct uthread_tcb*) malloc(sizeof(struct uthread_tcb)); //Allocate memory space for TCB.
+	//Allocate memory space for TCB.
+	created_thread = (struct uthread_tcb*) 
+				malloc(sizeof(struct uthread_tcb)); 
 	if (created_thread == NULL)
 		return -1;
 
-	created_thread -> top_of_stack = uthread_ctx_alloc_stack(); //Handle the stack.
+	//Handle the stack.
+	created_thread -> top_of_stack = uthread_ctx_alloc_stack(); 
 
+	//Initialize the context.
 	created_thread -> ctx = malloc(sizeof(uthread_ctx_t));
-	uthread_ctx_init(created_thread -> ctx, created_thread -> top_of_stack, func, arg);
-	
-	queue_enqueue(tcb_queue, (void*) created_thread); //Add the created TCB into the global queue. 
+	uthread_ctx_init(created_thread -> ctx, 
+			  created_thread -> top_of_stack, func, arg);
+
+	//Add the created TCB into the global queue. 
+	queue_enqueue(tcb_queue, (void*) created_thread); 
+
 	return 0;
 }
 
 int uthread_start(uthread_func_t func, void *arg)
 {
+	//Initialize the queues.
 	tcb_queue = queue_create();
 	garbage_tcb = queue_create();
 
-	/* Build the TCB for main idle thread */
+	// Build the TCB for main idle thread.
 	main_thread = (struct uthread_tcb*) malloc(sizeof(struct uthread_tcb));
 	if (main_thread == NULL)
 		return -1;
@@ -83,15 +105,19 @@ int uthread_start(uthread_func_t func, void *arg)
 	uthread_create(func, arg);
 
 	while (1) {
+
+		//Deal with completed threads
 		while (queue_length(garbage_tcb) > 0) {
 			void* discard;
 			queue_dequeue(garbage_tcb, &discard);
 			free(discard);
 		}
 
+		//Break the loop if queue is empty
 		if (!queue_length(tcb_queue))
 			break;
 
+		//Go to the next thread
 		uthread_yield();
 	}
 
@@ -107,13 +133,19 @@ void uthread_block(void)
 {
 	current_running -> state = 2;
 	struct uthread_tcb* blocked_thread = current_running;
-	queue_dequeue(tcb_queue, (void**) &current_running); //Set the next thread as the running thread.
+
+	//Set the next thread as the running thread.
+	queue_dequeue(tcb_queue, (void**) &current_running); 
+
 	current_running -> state = 1;
+
+	//Go to the next thread.
 	uthread_ctx_switch(blocked_thread -> ctx, current_running -> ctx);
 }
 
 void uthread_unblock(struct uthread_tcb *uthread)
 {
+	//Reset the state and add the thread back to the queue.
 	uthread -> state = 0;
 	queue_enqueue(tcb_queue, (void*) uthread);
 }
