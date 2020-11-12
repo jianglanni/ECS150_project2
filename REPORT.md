@@ -65,6 +65,6 @@ enabled, SIGALRM would be raised, causing the thread executing `hello()` to
 yield. Once the thread yields, we get to the thread executing `goodbye()`, 
 execute that, and the function process is killed because of SIGINT. We think 
 that this tester might suffice since it clearly demonstrates how differently 
-our code should run when preemption is enabled or disabled. Also, it we do know
+our code should run when preemption is enabled or disabled. Also, we do know
 that the code works as expected when we disable preemption.
 
