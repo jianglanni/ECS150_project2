@@ -51,20 +51,23 @@ scheduled to run later.
 
 #### Phase 4: Preemption
 
-The preemption phase deals with setting up alarms and handling alarms, in order 
-for CPU to gain control over the threads. Inside `preempt_stop()`, we decide to
-stop raising signals and responding to them, so that if we don't hinder any 
-other signal handlers responding to SIGVTALRM, and they could be easily 
-reactivated for future use. 
+Our preemption raises SIGVTALRM 100 times a second and such a signal will 
+trigger `uthread_yield()`, so that any threads cannot take the CPU for too 
+long. Inside `preempt_stop()`, we decide to stop raising signals so that 
+we don't hinder any future signal handlers. We stop responding to the signal
+as well because we do not want to call `uthread_yield()` by accident when 
+SIGVTALRM gets raised by future executions.
 
 The tester for this phase calls `uthread_start()`, which would start the 
-preemption and register the execution flow of the function `hello()` on the main 
-thread. Inside the function hello, we create a thread to execute the other 
-function `goodbye()`, and get in the while loop. Since the preemption is 
-enabled, SIGALRM would be raised, causing the thread executing `hello()` to 
+preemption and register the function `hello()` as the next thread. 
+Inside the function hello, we create a thread to execute the other 
+function `goodbye()`, and get in an infinite loop. Since the preemption is 
+enabled, SIGVTALRM would be raised, causing the thread executing `hello()` to 
 yield. Once the thread yields, we get to the thread executing `goodbye()`, 
-execute that, and the function process is killed because of SIGINT. We think 
-that this tester might suffice since it clearly demonstrates how differently 
-our code should run when preemption is enabled or disabled. Also, we do know
-that the code works as expected when we disable preemption.
-
+which prints a message and end the whole process. During the test, we did 
+not get trapped in `hello()` where there is no yield statement. Instead, we 
+get the message from `goodbye()` and the process ends. So, we know that our 
+preemption works. We think that this tester might suffice since it clearly 
+demonstrates how differently our code should run when preemption is enabled 
+or disabled. Also, we know that the code works as expected when we disable 
+preemption.
