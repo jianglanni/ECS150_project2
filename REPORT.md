@@ -55,3 +55,16 @@ thread.
 
 #### Phase 4: Preemption
 
+The preemption phase deals with setting up alarms and handling alarms, in order 
+for CPU to gain control over the threads. Inside `preempt_stop()`, we decide to
+stop raising signals and responding to them, so that if we don't hinder any 
+other signal handlers responding to SIGVTALRM, and they could be easily 
+reactivated for future use. 
+
+The tester for this phase calls `uthread_start()`, which would start the 
+preemption and register the execution flow of the function `hello()` on the main 
+thread. Inside the function hello, we create a thread to execute the other 
+function `goodbye()`, and get in the while loop. Since the preemption is 
+enabled, SIGALRM would be raised, causing the thread executing `hello()` to 
+yield. Once the thread yields, we get to the thread executing `goodbye()`, 
+execute that, and the function process is killed because of SIGINT.
