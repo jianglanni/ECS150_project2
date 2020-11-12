@@ -74,6 +74,7 @@ static void filter(void *arg)
 	sem_destroy(f->left->produce);
 	sem_destroy(f->left->consume);
 	free(f->left);
+	free(f);
 }
 
 /* Consumer thread */
