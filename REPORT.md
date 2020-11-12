@@ -15,7 +15,8 @@ initializes all the struct members.`queue_destroy()`frees up all the memory
 allocated to the queue. `queue_enqueue()` and `queue_dequeue()` enqueues and 
 dequeues the `data` to and from the queue respectively. The `queue_delete()` 
 deletes an item from the list, specified by `data`. The `queue_length()` returns 
-the current size of the queue. The track of size is kept after 
+the current size of the queue. The track of size is kept using a `length` 
+variable used inside the the struct.
 
 #### Phase 2: Implementing a User Level Thread
 
