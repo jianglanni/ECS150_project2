@@ -10,7 +10,7 @@ implementedas a Linked List since it provides for faster deletion than an array,
 and it also provides for dynamic sizes, unlike an array. The datatype has been 
 set to void*, in order to remove any restrictions from on the type of data that 
 can use this queue. As the name suggests, the `queue_create()` is responsible 
-for creating the queue. It allocates memory for the queue struct object and
+for allocating memory for the queue struct object and
 initializes all the struct members.`queue_destroy()`frees up all the memory 
 allocated to the queue. `queue_enqueue()` and `queue_dequeue()` enqueues and 
 dequeues the `data` to and from the queue respectively. The `queue_delete()` 
