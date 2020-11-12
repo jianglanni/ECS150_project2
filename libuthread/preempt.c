@@ -33,6 +33,7 @@ void preempt_enable(void)
 
 void sig_handler(int signum) {
 	uthread_yield();
+	++signum;
 }
 
 void preempt_start(void)
