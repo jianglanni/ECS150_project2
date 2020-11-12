@@ -27,7 +27,7 @@ and the actions are not supposed to be interrupted. So, we disable preemption
 when entering the functions and restore when finished. `uthread_start()` is the 
 backbone of the implementation, it creates the first thread from the arguments it 
 takes and registers the current execution flow as a manageable thread, so that 
-it can call `uthread_yield()` to left the CPU to the first thread. Besides, it 
+it can call `uthread_yield()` to yield the CPU to the next thread. Besides, it 
 cleans the exited threads whose TCBs are in queue `garbage_tcb` to recycle some 
 memory space. When `tcb_queue` is empty, the main thread stop yielding and clear 
 the memory space used by the data structures of uthread. 
