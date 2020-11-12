@@ -67,4 +67,8 @@ thread. Inside the function hello, we create a thread to execute the other
 function `goodbye()`, and get in the while loop. Since the preemption is 
 enabled, SIGALRM would be raised, causing the thread executing `hello()` to 
 yield. Once the thread yields, we get to the thread executing `goodbye()`, 
-execute that, and the function process is killed because of SIGINT.
+execute that, and the function process is killed because of SIGINT. If we were
+to disable preemption, we would be stuck in the while loop forever. We think 
+this tester would work, since it accurately demonstrates the functionality of 
+preemption, and also tests the difference between disabling and enabling 
+preemption.
