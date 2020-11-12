@@ -57,7 +57,7 @@ void preempt_stop(void)
 	//Stop the alarm
 	setitimer(ITIMER_VIRTUAL, NULL, NULL);
 	
-	//Stop responding to alarms
+	//Stop reponding to alarms
 	struct sigaction sa;
 	sa.sa_handler = SIG_DFL;
 	sigemptyset(&sa.sa_mask);
