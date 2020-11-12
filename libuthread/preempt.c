@@ -47,8 +47,8 @@ void preempt_start(void)
 	struct itimerval itv;
     	itv.it_interval.tv_sec = 0; //10ms
     	itv.it_interval.tv_usec = 1000000 / HZ;
-    	itv.it_value.tv_sec = 0; //0.001ms, if both 0, it doesn't run
-    	itv.it_value.tv_usec = 1;
+    	itv.it_value.tv_sec = 0;
+    	itv.it_value.tv_usec = 1000000 / HZ;
     	setitimer(ITIMER_VIRTUAL, &itv, NULL);
 }
 
