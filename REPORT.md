@@ -8,7 +8,7 @@ reverse order. The queue has a node struct that contains pointers to the current
 next node. The head and tail of the queue are also defined. The queue has been 
 implementedas a Linked List since it provides for faster deletion than an array,
 and it also provides for dynamic sizes, unlike an array. The datatype has been 
-set to void, in order to remove any restrictions from on the type of data that 
+set to void*, in order to remove any restrictions from on the type of data that 
 can use this queue. As the name suggests, the `queue_create()` is responsible 
 for creating the queue. It allocates memory for the queue struct object and
 initializes all the struct members.`queue_destroy()`frees up all the memory 
