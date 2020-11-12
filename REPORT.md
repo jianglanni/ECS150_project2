@@ -2,73 +2,50 @@
 
 #### Phase 1: Implementing a Queue
 
-In this phase, the queue is implemented using a Linked List data structure. A 
-singly linked list is used, since we do not need to traverse the list in the 
-reverse order. The queue has a node struct that contains pointers to the current 
-next node. The head and tail of the queue are also defined. The queue has been 
-implementedas a Linked List since it provides for faster deletion than an array,
-and it also provides for dynamic sizes, unlike an array. The datatype has been 
-set to void, in order to remove any restrictions from on the type of data that 
-can use this queue. As the name suggests, the `queue_create()` is responsible 
-for creating the queue. It allocates memory for the queue struct object and
-initializes all the struct members.`queue_destroy()`frees up all the memory 
-allocated to the queue. `queue_enqueue()` and `queue_dequeue()` enqueues and 
-dequeues the `data` to and from the queue respectively. The `queue_delete()` 
-deletes an item from the list, specified by `data`. The `queue_length()` returns 
-the current size of the queue. The track of size is kept using a `length` 
-variable used inside the the struct.
+In this phase, we choose linked list as the data structure, because we will not
+do random access. Also, we do not have to worry about the memory management of
+linked list since each node's memory space is independent from others'. In 
+`struct queue`, we have a pointer `head`, where we dequeue data from the queue, 
+and a pointer `tail`, where we enqueue data to the queue, since this is a FIFO 
+data structure. Besides, we have a `int size` that changes whenever an enqueue, 
+a dequeue, or a delete is called, so that we can easily track the length of the 
+queue. 
+
 
 #### Phase 2: Implementing a User Level Thread
 
-For the implementation, we instantiate the TCB struct to create a current thread
-and a main thread. The TCB struct contains a stack pointer, a backup context 
-pointer, and a state. The main thread is the default thread, the current thread
-switches to the main thread after execution or after yielding. There are 2 queue
-objects:`garbage_tcb` and `tcb_queue`, containing the TCBs that have exited and 
-that are ready respectively. Creating a seperate queue for threads that have 
-exited`uthread_create()` creates the thread by  initializing all the variables, 
-while `thread_start()` is creates the main thread and makes it the current 
-thread. In addition to that, we also remove any threads that have already 
-exited. It is here that preemption is started and CPU starts gaining control of 
-the threads. Before the function returns, we also make sure that all the 
-preemption is disabled so that we can safely enter the critical section for 
-context switching. Context switching should happen inside the critical section
-we cannot have `uthread_yield()` be called on the main thread. For yielding a 
-thread, we disable the preemption, and make the next thread in the queue as the 
-current running thread. After we quit the critical section, we unblock the 
-SIGVTALRM  signals. A similar operation is done while yielding, except we put 
-the current thread in the queue as well, so that it can be executed later. The 
-same operation is used in `thread_exit()`except, we enqueue it to the 
-`garbage_tcb` first, and it is deleted when start will be called.
+The implementation of uthread is the core of this project. First, a TCB is 
+composed by its state, context, and stack pointer, which is the environment of
+a thread. We keep the TCBs inside `tcb_queue` , which is a FIFO data structure 
+we made in phase 1, since our scheduling algorithm is First in First served. 
+A thread that calls `uthread_yield()` will add its TCB back to `tcb_queue` to 
+get scheduled later, while a thread which calls `uthread_exit()` adds its TCB 
+to `garbage_tcb`, waiting to be collected so that we can recycle the memory 
+space. Functions `uthread_yield()`, `uthread_exit()`, and `uthread_block()` are
+all critical sections because we do some jobs preparing for context switching 
+and the actions are not supposed to be interrupted. So, we disable preemption 
+when entering the functions and restore when finished. `uthread_start()` is the 
+backbone of the implementation, it creates the first thread from the arguments it 
+takes and registers the current execution flow as a manageable thread, so that 
+it can call `uthread_yield()` to left the CPU to the first thread. Besides, it 
+cleans the exited threads whose TCBs are in queue `garbage_tcb` to recycle some 
+memory space. When `tcb_queue` is empty, the main thread stop yielding and clear 
+the memory space used by the data structures of uthread. 
 
-#### Phase 3: Implementing a Semaphore
+
+#### Phase 3: Implementing a Semaphore and Block mechanism
 
 The semaphore struct has 2 member variables: `waitlist` and `count`. The `count` 
-simulates the internal count of the semaphore, and the `waitlist` is a queue of 
-thread TCBs waiting to grab a resource when the no resources are available. We 
-used a queue since our scheduling algorithm is based on the 
-First-Come-First-Serve basis. Once a thread asks for a resource, if the 
-semaphore count is 0, all the threads asking for the resource is blocked. Once a 
-semaphore is free,we check the waitlist to see if there are any other threads 
-waiting for the resource, in which case the semaphore is assigned to that 
-thread.
+simulates the internal count of the semaphore. As for `waitlist`, if a thread 
+cannot get a certain kind of resources, it will be blocked by the resources' 
+semaphore, and the thread's TCB will go to the `waitlist` of this certain 
+semaphore. The TCB does not go into the `tcb_queue` because it is blocked and 
+should not rununtil getting unblocked. Then, the next thread in 
+`tcb_queue` will take over. The `waitlist` is FIFO, because when we unblock a 
+thread, we want the first blocked thread to be revived to prevent starvation. 
+The way we unblock a thread is simple, we just dequeue its TCB from the 
+certain `waitlist` and add it back to `tcb_queue` so that the thread can be 
+scheduled to run later. 
 
 #### Phase 4: Preemption
 
-The preemption phase deals with setting up alarms and handling alarms, in order 
-for CPU to gain control over the threads. Inside `preempt_stop()`, we decide to
-stop raising signals and responding to them, so that if we don't hinder any 
-other signal handlers responding to SIGVTALRM, and they could be easily 
-reactivated for future use. 
-
-The tester for this phase calls `uthread_start()`, which would start the 
-preemption and register the execution flow of the function `hello()` on the main 
-thread. Inside the function hello, we create a thread to execute the other 
-function `goodbye()`, and get in the while loop. Since the preemption is 
-enabled, SIGALRM would be raised, causing the thread executing `hello()` to 
-yield. Once the thread yields, we get to the thread executing `goodbye()`, 
-execute that, and the function process is killed because of SIGINT. If we were
-to disable preemption, we would be stuck in the while loop forever. We think 
-this tester would work, since it accurately demonstrates the functionality of 
-preemption, and also tests the difference between disabling and enabling 
-preemption.
