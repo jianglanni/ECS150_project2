@@ -4,7 +4,9 @@
 
 In this phase, we choose linked list as the data structure, because we will not
 do random access. Also, we do not have to worry about the memory management of
-linked list since each node's memory space is independent from others'. In 
+linked list since each node's memory space is independent from others'. Besides, 
+deleting a node in the mid of a linked list is easy, so the implementation of 
+`queue_delete()` will be just like reassigning some pointers. In 
 `struct queue`, we have a pointer `head`, where we dequeue data from the queue, 
 and a pointer `tail`, where we enqueue data to the queue, since this is a FIFO 
 data structure. Besides, we have a `int size` that changes whenever an enqueue, 
@@ -37,10 +39,10 @@ the memory space used by the data structures of uthread.
 
 The semaphore struct has 2 member variables: `waitlist` and `count`. The `count` 
 simulates the internal count of the semaphore. As for `waitlist`, if a thread 
-cannot get a certain kind of resources, it will be blocked by the resources' 
-semaphore, and the thread's TCB will go to the `waitlist` of this certain 
+calls `sem_down()` and it hits a semaphore whose count is 0, it gets blocked by 
+the semaphore, and the thread's TCB will go to the `waitlist` of this certain 
 semaphore. The TCB does not go into the `tcb_queue` because it is blocked and 
-should not rununtil getting unblocked. Then, the next thread in 
+should not run until getting unblocked. Then, the next thread in 
 `tcb_queue` will take over. The `waitlist` is FIFO, because when we unblock a 
 thread, we want the first blocked thread to be revived to prevent starvation. 
 The way we unblock a thread is simple, we just dequeue its TCB from the 
